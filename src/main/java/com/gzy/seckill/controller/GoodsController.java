@@ -1,6 +1,7 @@
 package com.gzy.seckill.controller;
 
 import com.gzy.seckill.pojo.User;
+import com.gzy.seckill.service.IGoodsService;
 import com.gzy.seckill.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -14,14 +15,13 @@ public class GoodsController {
     @Autowired
     private IUserService userService;
 
+    @Autowired
+    private IGoodsService goodsService;
+
     @RequestMapping("/toList")
     public String toList(Model model, User user) {
-        if (null == user) {
-            return "login";
-        }
         model.addAttribute("user", user);
-
-        System.out.println(user);
+        model.addAttribute("goodsList", goodsService.findGoodsVo());
         return "goodsList";
     }
 }
