@@ -1,5 +1,6 @@
 package com.gzy.seckill.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.gzy.seckill.exception.GlobalException;
 import com.gzy.seckill.mapper.UserMapper;
@@ -12,6 +13,7 @@ import com.gzy.seckill.vo.LoginVo;
 import com.gzy.seckill.vo.RespBean;
 import com.gzy.seckill.vo.RespBeanEnum;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
@@ -31,6 +33,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Autowired
     UserMapper userMapper;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
     @Override
     public RespBean doLogin(LoginVo loginVo, HttpServletRequest request, HttpServletResponse response) {
         String mobile = loginVo.getMobile();
@@ -46,8 +51,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
 
         String ticket = UUIDUtil.uuid();
-        request.getSession().setAttribute(ticket, user);
+        redisTemplate.opsForValue().set("user:" + ticket, user);
         CookieUtil.setCookie(request, response, "userTicket", ticket);
         return RespBean.success();
+    }
+
+    @Override
+    public User getUserByCookie(String ticket, HttpServletRequest request, HttpServletResponse response) {
+        if (StringUtils.isEmpty(ticket)) {
+            return null;
+        }
+        User user = (User) redisTemplate.opsForValue().get("user:" + ticket);
+        if (user != null) {
+            CookieUtil.setCookie(request, response, "userTicket", ticket);
+        }
+        return user;
     }
 }

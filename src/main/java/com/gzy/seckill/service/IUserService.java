@@ -20,4 +20,6 @@ import javax.validation.Valid;
 public interface IUserService extends IService<User> {
 
     RespBean doLogin(LoginVo loginVo, HttpServletRequest request, HttpServletResponse response);
+
+    User getUserByCookie(String ticket, HttpServletRequest request, HttpServletResponse response);
 }
