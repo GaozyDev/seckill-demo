@@ -159,7 +159,6 @@
 
     function getDetails() {
         var goodsId = g_getQueryString("goodsId");
-        console.log(goodsId);
         $.ajax({
             url: '/goods/detail/' + goodsId,
             type: 'GET',
@@ -192,6 +191,12 @@
         $("#goodsPrice").text(goodsVo.goodsPrice);
         $("#seckillPrice").text(goodsVo.seckillPrice);
         $("#stockCount").text(goodsVo.stockCount);
+
+        if (remainSeconds > 0) {
+            refreshCaptcha();
+            $("#captchaImg").show();
+            $("#captcha").show();
+        }
     }
 
     function countDown() {
@@ -214,10 +219,6 @@
                 $("#remainSeconds").val(remainSeconds - 1);
                 countDown();
             }, 1000);
-
-            refreshCaptcha();
-            $("#captchaImg").show();
-            $("#captcha").show();
         } else {
             if (timeout) {
                 clearTimeout(timeout);

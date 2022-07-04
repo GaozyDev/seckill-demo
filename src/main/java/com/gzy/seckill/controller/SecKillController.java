@@ -9,6 +9,7 @@ import com.gzy.seckill.service.IGoodsService;
 import com.gzy.seckill.service.IOrderService;
 import com.gzy.seckill.service.ISeckillOrderService;
 import com.gzy.seckill.vo.GoodsVo;
+import com.gzy.seckill.vo.RespBean;
 import com.gzy.seckill.vo.RespBeanEnum;
 import com.wf.captcha.ArithmeticCaptcha;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -46,7 +48,7 @@ public class SecKillController {
             throw new GlobalException(RespBeanEnum.REQUEST_ILLEGAL);
         }
         response.setContentType("image/jpg");
-        response.setHeader("Pargam", "no-cache");
+        response.setHeader("Pragma", "No-cache");
         response.setHeader("Cache-Control", "no-cache");
         response.setDateHeader("Expires", 0);
 
@@ -82,4 +84,20 @@ public class SecKillController {
         model.addAttribute("goods", goods);
         return "orderDetail";
     }
+
+    @GetMapping(value = "/path")
+    @ResponseBody
+    public RespBean getPath(User user, Long goodsId, String captcha) {
+        if (user == null) {
+            return RespBean.error(RespBeanEnum.SESSION_ERROR);
+        }
+
+        boolean check = orderService.checkCaptcha(user, goodsId, captcha);
+        if (check) {
+            return RespBean.error(RespBeanEnum.ERROR_CAPTCHA);
+        }
+        String str = orderService.createPath(user, goodsId);
+        return RespBean.success(str);
+    }
+
 }

@@ -1,6 +1,7 @@
 package com.gzy.seckill.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.gzy.seckill.mapper.OrderMapper;
 import com.gzy.seckill.pojo.Order;
@@ -10,11 +11,15 @@ import com.gzy.seckill.pojo.User;
 import com.gzy.seckill.service.IOrderService;
 import com.gzy.seckill.service.ISeckillGoodsService;
 import com.gzy.seckill.service.ISeckillOrderService;
+import com.gzy.seckill.utils.MD5Util;
+import com.gzy.seckill.utils.UUIDUtil;
 import com.gzy.seckill.vo.GoodsVo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -35,6 +40,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
     @Autowired
     private ISeckillOrderService seckillOrderService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     @Override
     public Order seckill(User user, GoodsVo goods) {
@@ -57,5 +65,21 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         seckillGoods.setGoodsId(goods.getId());
         seckillOrderService.save(seckillOrder);
         return order;
+    }
+
+    @Override
+    public boolean checkCaptcha(User user, Long goodsId, String captcha) {
+        if (user == null || goodsId < 0 || StringUtils.isEmpty(captcha)) {
+            return false;
+        }
+        String redisCaptcha = (String) redisTemplate.opsForValue().get("captcha" + user.getId() + ":" + goodsId);
+        return captcha.equals(redisCaptcha);
+    }
+
+    @Override
+    public String createPath(User user, Long goodsId) {
+        String str = MD5Util.md5(UUIDUtil.uuid() + 123456);
+        redisTemplate.opsForValue().set("seckillPath:" + user.getId() + ":" + goodsId, str, 1, TimeUnit.MINUTES);
+        return str;
     }
 }

@@ -16,4 +16,8 @@ import com.gzy.seckill.vo.GoodsVo;
 public interface IOrderService extends IService<Order> {
 
     Order seckill(User user, GoodsVo goods);
+
+    boolean checkCaptcha(User user, Long goodsId, String captcha);
+
+    String createPath(User user, Long goodsId);
 }
