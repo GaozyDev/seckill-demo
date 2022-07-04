@@ -42,7 +42,8 @@
                g.goods_stock,
                sg.stock_count,
                sg.start_date,
-               sg.end_date
+               sg.end_date,
+               sg.seckill_price
         FROM t_goods g
                  LEFT JOIN t_seckill_goods AS sg ON g.id = sg.goods_id
         WHERE g.id = #{goodsId}
