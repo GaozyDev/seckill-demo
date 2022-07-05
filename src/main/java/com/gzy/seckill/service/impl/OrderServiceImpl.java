@@ -4,17 +4,21 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.gzy.seckill.exception.GlobalException;
 import com.gzy.seckill.mapper.OrderMapper;
 import com.gzy.seckill.pojo.Order;
 import com.gzy.seckill.pojo.SeckillGoods;
 import com.gzy.seckill.pojo.SeckillOrder;
 import com.gzy.seckill.pojo.User;
+import com.gzy.seckill.service.IGoodsService;
 import com.gzy.seckill.service.IOrderService;
 import com.gzy.seckill.service.ISeckillGoodsService;
 import com.gzy.seckill.service.ISeckillOrderService;
 import com.gzy.seckill.utils.MD5Util;
 import com.gzy.seckill.utils.UUIDUtil;
 import com.gzy.seckill.vo.GoodsVo;
+import com.gzy.seckill.vo.OrderDetailVo;
+import com.gzy.seckill.vo.RespBeanEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -48,6 +52,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
     @Autowired
     private RedisTemplate redisTemplate;
+
+    @Autowired
+    private IGoodsService goodsService;
 
     @Transactional
     @Override
@@ -108,5 +115,15 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
         String redisPath = (String) redisTemplate.opsForValue().get("seckillPath:" + user.getId() + ":" + goodsId);
         return path.equals(redisPath);
+    }
+
+    @Override
+    public OrderDetailVo detail(Long orderId) {
+        if (orderId == null) {
+            throw new GlobalException(RespBeanEnum.ORDER_NOT_EXIST);
+        }
+        Order order = orderMapper.selectById(orderId);
+        GoodsVo goodsVo = goodsService.findGoodsVoByGoodsId(order.getGoodsId());
+        return new OrderDetailVo(order, goodsVo);
     }
 }

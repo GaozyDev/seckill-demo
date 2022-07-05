@@ -22,7 +22,9 @@ public enum RespBeanEnum {
     EMPTY_STOCK(500500, "库存不足"),
     REPEAT_ERROR(500500, "该商品每人限购一件"),
     REQUEST_ILLEGAL(500502, "请求非法，请重新尝试"),
-    ERROR_CAPTCHA(500503, "验证码错误，请重新输入");
+    ERROR_CAPTCHA(500503, "验证码错误，请重新输入"),
+
+    ORDER_NOT_EXIST(500300, "订单不存在");
 
     private final Integer code;
     private final String message;

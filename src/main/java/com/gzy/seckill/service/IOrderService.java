@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.gzy.seckill.pojo.Order;
 import com.gzy.seckill.pojo.User;
 import com.gzy.seckill.vo.GoodsVo;
+import com.gzy.seckill.vo.OrderDetailVo;
 
 /**
  * <p>
@@ -22,4 +23,6 @@ public interface IOrderService extends IService<Order> {
     String createPath(User user, Long goodsId);
 
     boolean checkPath(User user, Long goodsId, String path);
+
+    OrderDetailVo detail(Long orderId);
 }

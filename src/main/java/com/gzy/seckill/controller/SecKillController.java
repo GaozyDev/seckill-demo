@@ -54,7 +54,7 @@ public class SecKillController implements InitializingBean {
     @Autowired
     private MQSender mqSender;
 
-    private Map<Long, Boolean> emptyStockMap = new HashMap<>();
+    private final Map<Long, Boolean> emptyStockMap = new HashMap<>();
 
     @GetMapping(value = "/captcha")
     public void verifyCode(User user, Long goodsId, HttpServletResponse response) {
@@ -119,6 +119,16 @@ public class SecKillController implements InitializingBean {
         SeckillMessage seckillMessage = new SeckillMessage(user, goodsId);
         mqSender.sendSeckillMessage(JsonUtil.object2JsonStr(seckillMessage));
         return RespBean.success(0);
+    }
+
+    @GetMapping("getResult")
+    @ResponseBody
+    public RespBean getResult(User user, Long goodsId) {
+        if (user == null) {
+            return RespBean.error(RespBeanEnum.SESSION_ERROR);
+        }
+        Long orderId = seckillOrderService.getResult(user, goodsId);
+        return RespBean.success(orderId);
     }
 
     @Override
