@@ -87,7 +87,7 @@
             },
             success: function (data) {
                 if (data.code == 200) {
-                    var path = data.object;
+                    var path = data.data;
                     doSecKill(path);
                 } else {
                     layer.msg(data.message);

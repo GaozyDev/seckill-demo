@@ -1,7 +1,6 @@
-package com.gzy.seckill.vo;
+package com.gzy.seckill.validator;
 
 import com.gzy.seckill.utils.ValidatorUtil;
-import com.gzy.seckill.validator.IsMobile;
 import org.thymeleaf.util.StringUtils;
 
 import javax.validation.ConstraintValidator;

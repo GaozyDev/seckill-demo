@@ -1,6 +1,7 @@
 package com.gzy.seckill.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.gzy.seckill.mapper.OrderMapper;
@@ -15,8 +16,11 @@ import com.gzy.seckill.utils.MD5Util;
 import com.gzy.seckill.utils.UUIDUtil;
 import com.gzy.seckill.vo.GoodsVo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +34,7 @@ import java.util.concurrent.TimeUnit;
  * @since 2022-06-02
  */
 @Service
+@Primary
 public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements IOrderService {
 
     @Autowired
@@ -44,11 +49,23 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Transactional
     @Override
     public Order seckill(User user, GoodsVo goods) {
+        ValueOperations valueOperations = redisTemplate.opsForValue();
+
         SeckillGoods seckillGoods = seckillGoodsService.getOne(new QueryWrapper<SeckillGoods>().eq("goods_id", goods.getId()));
         seckillGoods.setStockCount(seckillGoods.getStockCount() - 1);
-        seckillGoodsService.updateById(seckillGoods);
+        seckillGoodsService.update(new UpdateWrapper<SeckillGoods>()
+                .setSql("stock_count = " + "stock_count-1")
+                .eq("goods_id", goods.getId())
+                .gt("stock_count", 0));
+
+        if (seckillGoods.getStockCount() < 1) {
+            valueOperations.set("isStockEmpty:" + goods.getId(), "0");
+            return null;
+        }
+
         Order order = new Order();
         order.setUserId(user.getId());
         order.setGoodsId(goods.getId());
@@ -62,8 +79,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         SeckillOrder seckillOrder = new SeckillOrder();
         seckillOrder.setUserId(user.getId());
         seckillOrder.setOrderId(order.getId());
-        seckillGoods.setGoodsId(goods.getId());
+        seckillOrder.setGoodsId(goods.getId());
         seckillOrderService.save(seckillOrder);
+        redisTemplate.opsForValue().set("order:" + user.getId() + ":" + goods.getId(), seckillOrder);
         return order;
     }
 
@@ -81,5 +99,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         String str = MD5Util.md5(UUIDUtil.uuid() + 123456);
         redisTemplate.opsForValue().set("seckillPath:" + user.getId() + ":" + goodsId, str, 1, TimeUnit.MINUTES);
         return str;
+    }
+
+    @Override
+    public boolean checkPath(User user, Long goodsId, String path) {
+        if (user == null || goodsId < 0 || StringUtils.isEmpty(path)) {
+            return false;
+        }
+        String redisPath = (String) redisTemplate.opsForValue().get("seckillPath:" + user.getId() + ":" + goodsId);
+        return path.equals(redisPath);
     }
 }
