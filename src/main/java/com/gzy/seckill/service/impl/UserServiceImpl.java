@@ -16,8 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.concurrent.TimeUnit;
 
 
 @Service
@@ -26,8 +28,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Autowired
     UserMapper userMapper;
 
-    @Autowired
-    private RedisTemplate redisTemplate;
+    @Resource
+    private RedisTemplate<String, User> redisTemplate;
 
     @Override
     public RespBean doLogin(LoginVo loginVo, HttpServletRequest request, HttpServletResponse response) {
@@ -44,7 +46,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
 
         String ticket = UUIDUtil.uuid();
-        redisTemplate.opsForValue().set("user:" + ticket, user);
+        redisTemplate.opsForValue().set("user:" + ticket, user, 30, TimeUnit.DAYS);
         CookieUtil.setCookie(request, response, "userTicket", ticket);
         return RespBean.success();
     }
@@ -54,7 +56,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         if (StringUtils.isEmpty(ticket)) {
             return null;
         }
-        User user = (User) redisTemplate.opsForValue().get("user:" + ticket);
+        User user = redisTemplate.opsForValue().get("user:" + ticket);
         if (user != null) {
             CookieUtil.setCookie(request, response, "userTicket", ticket);
         }

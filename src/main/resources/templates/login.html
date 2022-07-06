@@ -28,11 +28,7 @@
         <div class="row">
             <label class="form-label col-md-4">请输入手机号码</label>
             <div class="col-md-5">
-                <input id="mobile" name="mobile" class="form-control" type="text" placeholder="手机号码" required="true"
-                />
-                <!--             取消位数限制          minlength="11" maxlength="11"-->
-            </div>
-            <div class="col-md-1">
+                <input id="mobile" name="mobile" class="form-control" type="text" placeholder="手机号码" required="true"/>
             </div>
         </div>
     </div>
@@ -42,17 +38,12 @@
             <label class="form-label col-md-4">请输入密码</label>
             <div class="col-md-5">
                 <input id="password" name="password" class="form-control" type="text" placeholder="密码"
-                       required="true"
-                />
-                <!--             取消位数限制            minlength="6" maxlength="16"-->
+                       required="true"/>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-md-5">
-            <button class="btn btn-primary btn-block" type="reset" onclick="reset()">重置</button>
-        </div>
         <div class="col-md-5">
             <button class="btn btn-primary btn-block" type="submit" onclick="login()">登录</button>
         </div>
@@ -62,7 +53,7 @@
 <script>
     function login() {
         $("#loginForm").validate({
-            submitHandler: function (form) {
+            submitHandler: function () {
                 doLogin();
             }
         });
@@ -74,7 +65,6 @@
         var inputPass = $("#password").val();
         var salt = g_passsword_salt;
         var str = "" + salt.charAt(0) + salt.charAt(2) + inputPass + salt.charAt(5) + salt.charAt(4);
-        console.log(str)
         var password = md5(str);
 
         $.ajax({
@@ -86,10 +76,8 @@
             },
             success: function (data) {
                 layer.closeAll();
-                if (data.code == 200) {
+                if (data.code === 200) {
                     layer.msg("成功");
-                    console.log(data);
-                    document.cookie = "userTicket=" + data.object;
                     window.location.href = "/goods/toList";
                 } else {
                     layer.msg(data.message);
