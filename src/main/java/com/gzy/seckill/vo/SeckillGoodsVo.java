@@ -11,7 +11,7 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class GoodsVo extends Goods {
+public class SeckillGoodsVo extends Goods {
 
     private BigDecimal seckillPrice;
     private Integer stockCount;

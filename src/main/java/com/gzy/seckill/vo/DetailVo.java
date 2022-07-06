@@ -12,7 +12,7 @@ public class DetailVo {
 
     private User user;
 
-    private GoodsVo goodsVo;
+    private SeckillGoodsVo seckillGoodsVo;
 
     private int remainSeconds;
 }

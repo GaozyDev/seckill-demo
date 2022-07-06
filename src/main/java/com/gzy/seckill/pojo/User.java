@@ -7,14 +7,7 @@ import lombok.EqualsAndHashCode;
 import java.io.Serializable;
 import java.util.Date;
 
-/**
- * <p>
- * 
- * </p>
- *
- * @author zhoubin
- * @since 2022-06-01
- */
+
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("t_user")

@@ -19,7 +19,7 @@
         , goods_name, goods_title, goods_img, goods_detail, goods_price, goods_stock
     </sql>
 
-    <select id="findGoodsVo" resultType="com.gzy.seckill.vo.GoodsVo">
+    <select id="findGoodsVo" resultType="com.gzy.seckill.vo.SeckillGoodsVo">
         SELECT g.id,
                g.goods_name,
                g.goods_img,
@@ -33,7 +33,7 @@
                  LEFT JOIN t_seckill_goods AS sg ON g.id = sg.goods_id
     </select>
 
-    <select id="findGoodsVoByGoodsId" resultType="com.gzy.seckill.vo.GoodsVo">
+    <select id="findSeckillGoodsVoByGoodsId" resultType="com.gzy.seckill.vo.SeckillGoodsVo">
         SELECT g.id,
                g.goods_name,
                g.goods_img,

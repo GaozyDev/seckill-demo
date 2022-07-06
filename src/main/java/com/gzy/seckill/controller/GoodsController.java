@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.gzy.seckill.pojo.User;
 import com.gzy.seckill.service.IGoodsService;
 import com.gzy.seckill.vo.DetailVo;
-import com.gzy.seckill.vo.GoodsVo;
+import com.gzy.seckill.vo.SeckillGoodsVo;
 import com.gzy.seckill.vo.RespBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -60,9 +60,9 @@ public class GoodsController {
     @RequestMapping(value = "/detail/{goodsId}", method = RequestMethod.GET)
     @ResponseBody
     public RespBean toDetail(User user, @PathVariable Long goodsId) {
-        GoodsVo goodsVo = goodsService.findGoodsVoByGoodsId(goodsId);
-        Date startDate = goodsVo.getStartDate();
-        Date endDate = goodsVo.getEndDate();
+        SeckillGoodsVo seckillGoodsVo = goodsService.findGoodsVoByGoodsId(goodsId);
+        Date startDate = seckillGoodsVo.getStartDate();
+        Date endDate = seckillGoodsVo.getEndDate();
         Date nowDate = new Date();
         int remainSeconds;
 
@@ -79,7 +79,7 @@ public class GoodsController {
 
         DetailVo detailVo = new DetailVo();
         detailVo.setUser(user);
-        detailVo.setGoodsVo(goodsVo);
+        detailVo.setSeckillGoodsVo(seckillGoodsVo);
         detailVo.setRemainSeconds(remainSeconds);
         return RespBean.success(detailVo);
     }

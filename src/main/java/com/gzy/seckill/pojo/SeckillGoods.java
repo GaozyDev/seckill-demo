@@ -10,14 +10,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
-/**
- * <p>
- * 
- * </p>
- *
- * @author zhoubin
- * @since 2022-06-02
- */
+
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("t_seckill_goods")

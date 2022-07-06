@@ -5,7 +5,7 @@ import com.gzy.seckill.pojo.User;
 import com.gzy.seckill.service.IGoodsService;
 import com.gzy.seckill.service.IOrderService;
 import com.gzy.seckill.utils.JsonUtil;
-import com.gzy.seckill.vo.GoodsVo;
+import com.gzy.seckill.vo.SeckillGoodsVo;
 import com.gzy.seckill.vo.SeckillMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -21,7 +21,7 @@ public class MQReceiver {
     private IGoodsService goodsService;
 
     @Autowired
-    private RedisTemplate redisTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
     private IOrderService orderService;
@@ -30,16 +30,19 @@ public class MQReceiver {
     public void receiver(String message) {
         log.info("接收消息:" + message);
         SeckillMessage seckillMessage = JsonUtil.jsonStr2Object(message, SeckillMessage.class);
+        if (seckillMessage == null) {
+            return;
+        }
         Long goodsId = seckillMessage.getGoodsId();
         User user = seckillMessage.getUser();
-        GoodsVo goodsVo = goodsService.findGoodsVoByGoodsId(goodsId);
-        if (goodsVo.getStockCount() < 1) {
+        SeckillGoodsVo seckillGoodsVo = goodsService.findGoodsVoByGoodsId(goodsId);
+        if (seckillGoodsVo.getStockCount() < 1) {
             return;
         }
         SeckillOrder seckillOrder = (SeckillOrder) redisTemplate.opsForValue().get("order:" + user.getId() + ":" + goodsId);
         if (seckillOrder != null) {
             return;
         }
-        orderService.seckill(user, goodsVo);
+        orderService.seckill(user, seckillGoodsVo);
     }
 }

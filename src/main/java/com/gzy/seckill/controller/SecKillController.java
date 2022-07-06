@@ -8,7 +8,7 @@ import com.gzy.seckill.service.IGoodsService;
 import com.gzy.seckill.service.IOrderService;
 import com.gzy.seckill.service.ISeckillOrderService;
 import com.gzy.seckill.utils.JsonUtil;
-import com.gzy.seckill.vo.GoodsVo;
+import com.gzy.seckill.vo.SeckillGoodsVo;
 import com.gzy.seckill.vo.RespBean;
 import com.gzy.seckill.vo.RespBeanEnum;
 import com.gzy.seckill.vo.SeckillMessage;
@@ -46,7 +46,7 @@ public class SecKillController implements InitializingBean {
     private IOrderService orderService;
 
     @Autowired
-    private RedisTemplate redisTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
     private RedisScript<Long> redisScript;
@@ -57,7 +57,7 @@ public class SecKillController implements InitializingBean {
     private final Map<Long, Boolean> emptyStockMap = new HashMap<>();
 
     @GetMapping(value = "/captcha")
-    public void verifyCode(User user, Long goodsId, HttpServletResponse response) {
+    public void verifyCaptcha(User user, Long goodsId, HttpServletResponse response) {
         if (user == null || goodsId < 0) {
             throw new GlobalException(RespBeanEnum.REQUEST_ILLEGAL);
         }
@@ -67,7 +67,7 @@ public class SecKillController implements InitializingBean {
         response.setDateHeader("Expires", 0);
 
         ArithmeticCaptcha captcha = new ArithmeticCaptcha(130, 32, 3);
-        redisTemplate.opsForValue().set("captcha:" + user.getId() + ":" + goodsId, captcha.text(), 300, TimeUnit.SECONDS);
+        redisTemplate.opsForValue().set("captcha:" + user.getId() + ":" + goodsId, captcha.text(), 10, TimeUnit.MINUTES);
         try {
             captcha.out(response.getOutputStream());
         } catch (IOException e) {
@@ -83,7 +83,7 @@ public class SecKillController implements InitializingBean {
         }
 
         boolean check = orderService.checkCaptcha(user, goodsId, captcha);
-        if (check) {
+        if (!check) {
             return RespBean.error(RespBeanEnum.ERROR_CAPTCHA);
         }
         String str = orderService.createPath(user, goodsId);
@@ -97,7 +97,7 @@ public class SecKillController implements InitializingBean {
             return RespBean.error(RespBeanEnum.SESSION_ERROR);
         }
 
-        ValueOperations valueOperations = redisTemplate.opsForValue();
+        ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
         boolean check = orderService.checkPath(user, goodsId, path);
         if (!check) {
             return RespBean.error(RespBeanEnum.REQUEST_ILLEGAL);
@@ -110,10 +110,13 @@ public class SecKillController implements InitializingBean {
         if (emptyStockMap.get(goodsId)) {
             return RespBean.error(RespBeanEnum.EMPTY_STOCK);
         }
-        Long stock = (Long) redisTemplate.execute(redisScript, Collections.singletonList("seckillGoods:" + goodsId), Collections.EMPTY_LIST);
+        Long stock = redisTemplate.execute(redisScript, Collections.singletonList("seckillGoods:" + goodsId), Collections.EMPTY_LIST);
+        if (stock == null) {
+            throw new GlobalException(RespBeanEnum.ERROR);
+        }
         if (stock < 0) {
             emptyStockMap.put(goodsId, true);
-            valueOperations.increment("seckillGoods:" + goodsId);
+            valueOperations.set("seckillGoods:" + goodsId, 0);
             return RespBean.error(RespBeanEnum.EMPTY_STOCK);
         }
         SeckillMessage seckillMessage = new SeckillMessage(user, goodsId);
@@ -133,13 +136,13 @@ public class SecKillController implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        List<GoodsVo> list = goodsService.findGoodsVo();
+        List<SeckillGoodsVo> list = goodsService.findGoodsVo();
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        for (GoodsVo goodsVo : list) {
-            redisTemplate.opsForValue().set("seckillGoods:" + goodsVo.getId(), goodsVo.getStockCount());
-            emptyStockMap.put(goodsVo.getId(), false);
+        for (SeckillGoodsVo seckillGoodsVo : list) {
+            redisTemplate.opsForValue().set("seckillGoods:" + seckillGoodsVo.getId(), seckillGoodsVo.getStockCount());
+            emptyStockMap.put(seckillGoodsVo.getId(), false);
         }
     }
 }

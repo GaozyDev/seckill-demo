@@ -85,7 +85,7 @@
                 captcha: captcha
             },
             success: function (data) {
-                if (data.code == 200) {
+                if (data.code === 200) {
                     var path = data.data;
                     doSecKill(path);
                 } else {
@@ -129,11 +129,11 @@
                 goodsId: goodsId
             },
             success: function (data) {
-                if (data.code == 200) {
+                if (data.code === 200) {
                     var orderId = data.data;
                     if (orderId < 0) {
                         layer.msg("对不起，秒杀失败");
-                    } else if (orderId == 0) {
+                    } else if (orderId === 0) {
                         setTimeout(function () {
                             getResult(goodsId)
                         });
@@ -147,6 +147,8 @@
                             }
                         )
                     }
+                } else {
+                    layer.msg(data.message);
                 }
             },
             error: function () {
@@ -176,19 +178,19 @@
 
     function render(detail) {
         var user = detail.user;
-        var goodsVo = detail.goodsVo;
+        var seckillGoodsVo = detail.seckillGoodsVo;
         var remainSeconds = detail.remainSeconds;
         if (user) {
             $("#userTip").hide();
         }
-        $("#goodsName").text(goodsVo.goodsName);
-        $("#goodsImg").attr("src", goodsVo.goodsImg);
-        $("#startTime").text(new Date(goodsVo.startDate).format("yyyy-MM-dd HH:mm:ss"));
+        $("#goodsName").text(seckillGoodsVo.goodsName);
+        $("#goodsImg").attr("src", seckillGoodsVo.goodsImg);
+        $("#startTime").text(new Date(seckillGoodsVo.startDate).format("yyyy-MM-dd HH:mm:ss"));
         $("#remainSeconds").val(remainSeconds);
-        $("#goodsId").val(goodsVo.id);
-        $("#goodsPrice").text(goodsVo.goodsPrice);
-        $("#seckillPrice").text(goodsVo.seckillPrice);
-        $("#stockCount").text(goodsVo.stockCount);
+        $("#goodsId").val(seckillGoodsVo.id);
+        $("#goodsPrice").text(seckillGoodsVo.goodsPrice);
+        $("#seckillPrice").text(seckillGoodsVo.seckillPrice);
+        $("#stockCount").text(seckillGoodsVo.stockCount);
 
         if (remainSeconds > 0) {
             refreshCaptcha();

@@ -9,14 +9,7 @@ import lombok.EqualsAndHashCode;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
-/**
- * <p>
- * 
- * </p>
- *
- * @author zhoubin
- * @since 2022-06-02
- */
+
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("t_goods")

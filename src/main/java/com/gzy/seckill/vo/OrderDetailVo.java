@@ -12,5 +12,5 @@ public class OrderDetailVo {
 
     private Order order;
 
-    private GoodsVo goodsVo;
+    private SeckillGoodsVo seckillGoodsVo;
 }

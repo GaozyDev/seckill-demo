@@ -6,17 +6,14 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.gzy.seckill.exception.GlobalException;
 import com.gzy.seckill.mapper.OrderMapper;
-import com.gzy.seckill.pojo.Order;
-import com.gzy.seckill.pojo.SeckillGoods;
-import com.gzy.seckill.pojo.SeckillOrder;
-import com.gzy.seckill.pojo.User;
+import com.gzy.seckill.pojo.*;
 import com.gzy.seckill.service.IGoodsService;
 import com.gzy.seckill.service.IOrderService;
 import com.gzy.seckill.service.ISeckillGoodsService;
 import com.gzy.seckill.service.ISeckillOrderService;
 import com.gzy.seckill.utils.MD5Util;
 import com.gzy.seckill.utils.UUIDUtil;
-import com.gzy.seckill.vo.GoodsVo;
+import com.gzy.seckill.vo.SeckillGoodsVo;
 import com.gzy.seckill.vo.OrderDetailVo;
 import com.gzy.seckill.vo.RespBeanEnum;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,14 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-/**
- * <p>
- * 服务实现类
- * </p>
- *
- * @author zhoubin
- * @since 2022-06-02
- */
+
 @Service
 @Primary
 public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements IOrderService {
@@ -51,27 +41,33 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     private ISeckillOrderService seckillOrderService;
 
     @Autowired
-    private RedisTemplate redisTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
     private IGoodsService goodsService;
 
     @Transactional
     @Override
-    public Order seckill(User user, GoodsVo goods) {
-        ValueOperations valueOperations = redisTemplate.opsForValue();
+    public Order seckill(User user, SeckillGoodsVo goods) {
+        ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
 
-        SeckillGoods seckillGoods = seckillGoodsService.getOne(new QueryWrapper<SeckillGoods>().eq("goods_id", goods.getId()));
+        SeckillGoods seckillGoods = seckillGoodsService.getOne(
+                new QueryWrapper<SeckillGoods>().eq("goods_id", goods.getId()));
         seckillGoods.setStockCount(seckillGoods.getStockCount() - 1);
         seckillGoodsService.update(new UpdateWrapper<SeckillGoods>()
-                .setSql("stock_count = " + "stock_count-1")
+                .setSql("stock_count = " + "stock_count - 1")
                 .eq("goods_id", goods.getId())
                 .gt("stock_count", 0));
 
-        if (seckillGoods.getStockCount() < 1) {
+        if (seckillGoods.getStockCount() < 0) {
             valueOperations.set("isStockEmpty:" + goods.getId(), "0");
             return null;
         }
+
+        goodsService.update(new UpdateWrapper<Goods>()
+                .setSql("goods_stock = " + "goods_stock - 1")
+                .eq("id", goods.getId())
+                .gt("goods_stock", 0));
 
         Order order = new Order();
         order.setUserId(user.getId());
@@ -88,7 +84,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         seckillOrder.setOrderId(order.getId());
         seckillOrder.setGoodsId(goods.getId());
         seckillOrderService.save(seckillOrder);
-        redisTemplate.opsForValue().set("order:" + user.getId() + ":" + goods.getId(), seckillOrder);
+//        redisTemplate.opsForValue().set("order:" + user.getId() + ":" + goods.getId(), seckillOrder);
         return order;
     }
 
@@ -97,7 +93,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         if (user == null || goodsId < 0 || StringUtils.isEmpty(captcha)) {
             return false;
         }
-        String redisCaptcha = (String) redisTemplate.opsForValue().get("captcha" + user.getId() + ":" + goodsId);
+        String redisCaptcha = (String) redisTemplate.opsForValue().get("captcha:" + user.getId() + ":" + goodsId);
         return captcha.equals(redisCaptcha);
     }
 
@@ -123,7 +119,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             throw new GlobalException(RespBeanEnum.ORDER_NOT_EXIST);
         }
         Order order = orderMapper.selectById(orderId);
-        GoodsVo goodsVo = goodsService.findGoodsVoByGoodsId(order.getGoodsId());
-        return new OrderDetailVo(order, goodsVo);
+        SeckillGoodsVo seckillGoodsVo = goodsService.findGoodsVoByGoodsId(order.getGoodsId());
+        return new OrderDetailVo(order, seckillGoodsVo);
     }
 }

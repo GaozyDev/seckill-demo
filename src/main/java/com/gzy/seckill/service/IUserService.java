@@ -9,14 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
-/**
- * <p>
- * 服务类
- * </p>
- *
- * @author zhoubin
- * @since 2022-06-01
- */
+
 public interface IUserService extends IService<User> {
 
     RespBean doLogin(LoginVo loginVo, HttpServletRequest request, HttpServletResponse response);

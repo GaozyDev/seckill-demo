@@ -8,14 +8,7 @@ import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 
-/**
- * <p>
- * 
- * </p>
- *
- * @author zhoubin
- * @since 2022-06-02
- */
+
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("t_seckill_order")
