@@ -17,17 +17,12 @@ public class SeckillOrderServiceImpl extends ServiceImpl<SeckillOrderMapper, Sec
     @Autowired
     private SeckillOrderMapper seckillOrderMapper;
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
-
     @Override
     public Long getResult(User user, Long goodsId) {
         SeckillOrder seckillOrder = seckillOrderMapper.selectOne(new QueryWrapper<SeckillOrder>()
                 .eq("user_id", user.getId()).eq("goods_id", goodsId));
         if (seckillOrder != null) {
             return seckillOrder.getOrderId();
-        } else if (Boolean.TRUE.equals(redisTemplate.hasKey("isStockEmpty:" + goodsId))) {
-            return -1L;
         } else {
             return 0L;
         }

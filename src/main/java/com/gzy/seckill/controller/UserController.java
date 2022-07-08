@@ -46,6 +46,7 @@ public class UserController {
             user.setId(10000000000L + i);
             user.setPassword("b7797cce01b4b131b433b6acf4add449"); // 123456
             user.setNickname(i + "");
+            user.setSlat("1a2b3c4d");
             users.add(user);
             String ticket = UUIDUtil.uuid();
             redisTemplate.opsForValue().set("user:" + ticket, user, 30, TimeUnit.DAYS);

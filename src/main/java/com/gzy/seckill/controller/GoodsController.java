@@ -60,7 +60,7 @@ public class GoodsController {
     @RequestMapping(value = "/detail/{goodsId}", method = RequestMethod.GET)
     @ResponseBody
     public RespBean toDetail(User user, @PathVariable Long goodsId) {
-        SeckillGoodsVo seckillGoodsVo = goodsService.findGoodsVoByGoodsId(goodsId);
+        SeckillGoodsVo seckillGoodsVo = goodsService.findSeckillGoodsVoByGoodsId(goodsId);
         Date startDate = seckillGoodsVo.getStartDate();
         Date endDate = seckillGoodsVo.getEndDate();
         Date nowDate = new Date();

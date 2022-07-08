@@ -97,19 +97,25 @@ public class SecKillController implements InitializingBean {
             return RespBean.error(RespBeanEnum.SESSION_ERROR);
         }
 
+        // 检查URL路径
         ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
         boolean check = orderService.checkPath(user, goodsId, path);
         if (!check) {
             return RespBean.error(RespBeanEnum.REQUEST_ILLEGAL);
         }
 
+        // 从Redis检查是否重复抢购
         SeckillOrder seckillOrder = (SeckillOrder) redisTemplate.opsForValue().get("order:" + user.getId() + ":" + goodsId);
         if (seckillOrder != null) {
             return RespBean.error(RespBeanEnum.REPEAT_ERROR);
         }
+
+        // 从内存中检查库存
         if (emptyStockMap.get(goodsId)) {
             return RespBean.error(RespBeanEnum.EMPTY_STOCK);
         }
+
+        // 从Redis获取库存
         Long stock = redisTemplate.execute(redisScript, Collections.singletonList("seckillGoods:" + goodsId), Collections.EMPTY_LIST);
         if (stock == null) {
             throw new GlobalException(RespBeanEnum.ERROR);
@@ -119,6 +125,8 @@ public class SecKillController implements InitializingBean {
             valueOperations.set("seckillGoods:" + goodsId, 0);
             return RespBean.error(RespBeanEnum.EMPTY_STOCK);
         }
+
+        // 通过RabbitMQ发送消息, 进数据库扣库存
         SeckillMessage seckillMessage = new SeckillMessage(user, goodsId);
         mqSender.sendSeckillMessage(JsonUtil.object2JsonStr(seckillMessage));
         return RespBean.success(0);

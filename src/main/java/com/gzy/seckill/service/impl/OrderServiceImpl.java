@@ -49,8 +49,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Transactional
     @Override
     public Order seckill(User user, SeckillGoodsVo goods) {
-        ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
-
+        // 检查数据库库存
         SeckillGoods seckillGoods = seckillGoodsService.getOne(
                 new QueryWrapper<SeckillGoods>().eq("goods_id", goods.getId()));
         seckillGoods.setStockCount(seckillGoods.getStockCount() - 1);
@@ -58,17 +57,15 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 .setSql("stock_count = " + "stock_count - 1")
                 .eq("goods_id", goods.getId())
                 .gt("stock_count", 0));
-
         if (seckillGoods.getStockCount() < 0) {
-            valueOperations.set("isStockEmpty:" + goods.getId(), "0");
             return null;
         }
-
         goodsService.update(new UpdateWrapper<Goods>()
                 .setSql("goods_stock = " + "goods_stock - 1")
                 .eq("id", goods.getId())
                 .gt("goods_stock", 0));
 
+        // 抢购成功, 入库
         Order order = new Order();
         order.setUserId(user.getId());
         order.setGoodsId(goods.getId());
@@ -84,7 +81,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         seckillOrder.setOrderId(order.getId());
         seckillOrder.setGoodsId(goods.getId());
         seckillOrderService.save(seckillOrder);
-//        redisTemplate.opsForValue().set("order:" + user.getId() + ":" + goods.getId(), seckillOrder);
+        redisTemplate.opsForValue().set("order:" + user.getId() + ":" + goods.getId(), seckillOrder);
         return order;
     }
 
@@ -119,7 +116,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             throw new GlobalException(RespBeanEnum.ORDER_NOT_EXIST);
         }
         Order order = orderMapper.selectById(orderId);
-        SeckillGoodsVo seckillGoodsVo = goodsService.findGoodsVoByGoodsId(order.getGoodsId());
+        SeckillGoodsVo seckillGoodsVo = goodsService.findSeckillGoodsVoByGoodsId(order.getGoodsId());
         return new OrderDetailVo(order, seckillGoodsVo);
     }
 }
